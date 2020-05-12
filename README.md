@@ -8,7 +8,7 @@ Support multiple redis connection
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'hs_redis', git: 'https://github.com/hungerstation/octopus.git'
+gem 'hs_redis', git: 'https://github.com/HungerStation/hs_redis.git'
 ```
 
 And then execute:
