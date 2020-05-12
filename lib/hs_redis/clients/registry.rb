@@ -6,8 +6,8 @@ module HsRedis
         # @param name [String], connection name
         # @param connection_pool [Object], object of ConnectionPool
         def register(name, connection_pool)
-          @registered_client ||= Hash.new
-          @registered_client[name.to_sym] = connection_pool
+          raise HsRedis::Errors::AlreadyRegistered unless client_exist? name
+          registered_client[name.to_sym] = connection_pool
         end
 
         # register redis connection pool
