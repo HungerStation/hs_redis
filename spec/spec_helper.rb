@@ -1,5 +1,12 @@
-require "bundler/setup"
-require "hs_redis"
+require 'bundler/setup'
+require 'hs_redis'
+require 'fakeredis/rspec'
+
+require 'pry'
+require 'redis'
+require 'mock_redis'
+require 'connection_pool'
+require 'ffaker'
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -10,5 +17,10 @@ RSpec.configure do |config|
 
   config.expect_with :rspec do |c|
     c.syntax = :expect
+  end
+
+  config.before(:each) do
+    mock_redis = MockRedis.new
+    allow(Redis).to receive(:new).and_return(mock_redis)
   end
 end

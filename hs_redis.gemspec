@@ -24,6 +24,9 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"
   spec.add_development_dependency "fakeredis"
+  spec.add_development_dependency "mock_redis"
+  spec.add_development_dependency "pry"
+  spec.add_development_dependency "ffaker"
 
   spec.add_runtime_dependency "redis", "~> 4.1.0"
   spec.add_runtime_dependency "connection_pool", "~> 2.2"

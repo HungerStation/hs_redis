@@ -6,7 +6,7 @@ module HsRedis
         # @param name [String], connection name
         # @param connection_pool [Object], object of ConnectionPool
         def register_client(name, connection_pool)
-          raise HsRedis::Errors::AlreadyRegistered unless registered? name
+          raise HsRedis::Errors::AlreadyRegistered if registered? name
           registered_clients[name.to_sym] = connection_pool
         end
 
@@ -19,7 +19,7 @@ module HsRedis
         # @param db [Integer], redis DB, default 0
         def register(name, pool_size: HsRedis::Configuration.pool_size, timeout: HsRedis.Configuration.timeout, client_name: nil, redis_uri: nil, db: 0)
           raise HsRedis::Errors::MissingParameter 'Missing Redis URI' unless redis_uri
-          redis_pool = ConnectionPool.new(size: 5, timeout: 5) do
+          redis_pool = ConnectionPool.new(size: pool_size, timeout: timeout) do
             begin
               redis = Redis.new(url: "#{redis_uri}/#{db}")
               client_name = client_name || name.upcase
@@ -29,14 +29,18 @@ module HsRedis
               raise HsRedis::Errors::Timeout, 'Connection Timeout'
             end
           end
-          raise HsRedis::Errors::AlreadyRegistered unless registered? name
+          raise HsRedis::Errors::AlreadyRegistered if registered? name
           registered_clients[name.to_sym] = redis_pool
+        end
+
+        def unregister(name)
+          registered_clients.delete name.to_sym if registered? name.to_sym
         end
 
         def registered_clients
           @registered_clients ||= Hash.new
         end
-        
+
         def registered?(name)
           registered_clients.keys.include? name.to_sym
         end

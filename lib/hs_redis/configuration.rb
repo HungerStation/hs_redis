@@ -29,13 +29,21 @@ module HsRedis
     end
 
     def clients
-      HsRedis::Clients::Registry.register_clients
+      HsRedis::Clients::Registry.registered_clients
     end
 
     def clients=(clients)
       clients.each do |key, value|
         HsRedis::Clients::Registry.register_client(key, value)
       end
+    end
+
+    def api_version
+      @configuration.api_version
+    end
+
+    def api_version=(api_version)
+      @configuration.api_version = api_version
     end
   end
 
@@ -52,7 +60,7 @@ module HsRedis
     @configuration.timeout = 5
     @configuration.api_version = 1
     @configuration.pool_size = 5
-    @configuration.expires_in = 24.hours.seconds
+    @configuration.expires_in = 60000
     @configuration
   end
 
