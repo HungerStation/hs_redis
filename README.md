@@ -56,7 +56,7 @@ HsRedis.registry.register(:listing_client, pool_size: 5, timeout: 5, redis_uri: 
 ### get operation
 ```
 callback = Proc.new { "callback_operation" }
-HsRedis::Store.new(:name).get(key, expires_in: 5000, callback) do
+HsRedis.client(:name).get(key, expires_in: 5000, callback) do
     //some operation
 end
 ```
@@ -64,7 +64,7 @@ end
 ### multi get operation
 ```
 callback = Proc.new { "callback_operation" }
-HsRedis::Store.new(:name).multi_get(*keys, expires_in: 5000, callback) do
+HsRedis.client(:name).multi_get(*keys, expires_in: 5000, callback) do
     //some operation
 end
 ```
@@ -72,7 +72,7 @@ end
 ### delete operation
 ```
 callback = Proc.new { "callback_operation" }
-HsRedis::Store.new(:name).delete(key, callback)
+HsRedis.client(:name).delete(key, callback)
 ```
 
 ### Notes

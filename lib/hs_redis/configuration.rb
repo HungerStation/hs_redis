@@ -67,6 +67,10 @@ module HsRedis
     self.configuration.registry
   end
 
+  def self.client(name)
+    HsRedis::Store.new(name)
+  end
+
   def self.initialize_configuration!
     @configuration = Configuration.new
     @configuration.timeout = 5
@@ -76,5 +80,4 @@ module HsRedis
     @configuration.registry = HsRedis::Clients::Registry
     @configuration
   end
-
 end

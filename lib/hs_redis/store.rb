@@ -65,7 +65,7 @@ module HsRedis
     private
 
     def client
-      raise HsRedis::Errors::NotRegistered unless HsRedis::Clients::Registry.registered? name
+      raise HsRedis::Errors::NotRegistered, 'Client Not Registered, please register in configuration' unless HsRedis::Clients::Registry.registered? name
       @client ||= HsRedis::Clients::Registry.registered_clients[name.to_sym]
     end
 
@@ -92,9 +92,8 @@ module HsRedis
     end
 
     def run_callback(callback)
-      raise HsRedis::Errors::ProcCallback unless callback.is_a? Proc
+      raise HsRedis::Errors::ProcCallback, 'Callback should be Proc' unless callback.is_a? Proc
       callback.call
     end
-
   end
 end

@@ -45,4 +45,8 @@ RSpec.describe HsRedis::Configuration do
   it 'can get default registry' do
     expect(HsRedis.registry).to eq HsRedis::Clients::Registry
   end
+
+  it 'can get client' do
+    expect(HsRedis.client(:name).is_a? HsRedis::Store).to eq true
+  end
 end
