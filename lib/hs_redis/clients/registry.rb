@@ -5,9 +5,9 @@ module HsRedis
         # register connection pool
         # @param name [String], connection name
         # @param connection_pool [Object], object of ConnectionPool
-        def register(name, connection_pool)
-          raise HsRedis::Errors::AlreadyRegistered unless client_exist? name
-          registered_client[name.to_sym] = connection_pool
+        def register_client(name, connection_pool)
+          raise HsRedis::Errors::AlreadyRegistered unless registered? name
+          registered_clients[name.to_sym] = connection_pool
         end
 
         # register redis connection pool
@@ -26,21 +26,19 @@ module HsRedis
               redis.call([:client, :setname, client_name])
               redis
             rescue Redis::TimeoutError
-              raise Redis::TimeoutError, 'Connection Timeout'
+              raise HsRedis::Errors::Timeout, 'Connection Timeout'
             end
           end
-          raise HsRedis::Errors::AlreadyRegistered unless client_exist? name
-          registered_client[name.to_sym] = redis_pool
+          raise HsRedis::Errors::AlreadyRegistered unless registered? name
+          registered_clients[name.to_sym] = redis_pool
         end
 
-        def registered_client
-          @registered_client ||= Hash.new
+        def registered_clients
+          @registered_clients ||= Hash.new
         end
-
-        private
-
-        def client_exist?(name)
-          @registered_client.keys.include? name.to_sym
+        
+        def registered?(name)
+          registered_clients.keys.include? name.to_sym
         end
       end
     end

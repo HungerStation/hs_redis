@@ -19,6 +19,24 @@ module HsRedis
     def pool_size=(pool_size)
       @configuration.pool_size = pool_size
     end
+
+    def expires_in
+      @configuration.expires_in
+    end
+
+    def expires_in=(expires_in)
+      @configuration.expires_in = expires_in
+    end
+
+    def clients
+      HsRedis::Clients::Registry.register_clients
+    end
+
+    def clients=(clients)
+      clients.each do |key, value|
+        HsRedis::Clients::Registry.register_client(key, value)
+      end
+    end
   end
 
   def self.configuration
@@ -34,6 +52,7 @@ module HsRedis
     @configuration.timeout = 5
     @configuration.api_version = 1
     @configuration.pool_size = 5
+    @configuration.expires_in = 24.hours.seconds
     @configuration
   end
 
