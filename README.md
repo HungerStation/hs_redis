@@ -56,8 +56,27 @@ HsRedis.registry.register(:listing_client, pool_size: 5, timeout: 5, redis_uri: 
 ### get operation
 ```
 callback = Proc.new { "callback_operation" }
-HsRedis::Store.new(:name).get(key, callback)
+HsRedis::Store.new(:name).get(key, expires_in: 5000, callback) do
+    //some operation
+end
 ```
+
+### multi get operation
+```
+callback = Proc.new { "callback_operation" }
+HsRedis::Store.new(:name).multi_get(*keys, expires_in: 5000, callback) do
+    //some operation
+end
+```
+
+### delete operation
+```
+callback = Proc.new { "callback_operation" }
+HsRedis::Store.new(:name).delete(key, callback)
+```
+
+### Notes
+currently, callback only for handling `Redis::TimeoutError`
 
 ## Development
 
@@ -67,7 +86,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/hs_redis.
+Bug reports and pull requests are welcome on GitHub at https://github.com/hungerstation/hs_redis.
 
 ## License
 
