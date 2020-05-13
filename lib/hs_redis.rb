@@ -4,6 +4,7 @@ require "hs_redis/errors/base"
 require "hs_redis/errors/already_registered"
 require "hs_redis/errors/missing_parameter"
 require "hs_redis/errors/timeout"
+require "hs_redis/errors/proc_callback"
 
 require "hs_redis/clients/registry"
 

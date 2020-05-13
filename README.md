@@ -20,8 +20,44 @@ Or install it yourself as:
     $ gem install hs_redis
 
 ## Usage
+### configuration
+put this configuration in initializer
+```
+client = ConnectionPool.new(size: 15, timeout: 5) do
+  redis = Redis.new(url: "#{Rails.application.secrets.redis_listing_url}")
+  if Rails.application.secrets.redis_set_client_name
+    client_name = 'listing_client'
+    redis.call([:client, :setname, client_name])
+  end
+  redis
+end
 
-TODO
+HsRedis.configure do |config|
+    config.pool_size = 5
+    config.timeout = 1
+    config.expires_in = 60000
+    config.clients = {
+      listing_client: client
+    }
+end
+```
+
+or using :
+```
+HsRedis.configure do |config|
+    config.pool_size = 5
+    config.timeout = 1
+    config.expires_in = 60000
+end
+HsRedis.registry.register_client(:listing_client, client)
+or
+HsRedis.registry.register(:listing_client, pool_size: 5, timeout: 5, redis_uri: 'redis/redis_uri', db: 0)
+```
+### get operation
+```
+callback = Proc.new { "callback_operation" }
+HsRedis::Store.new(:name).get(key, callback)
+```
 
 ## Development
 

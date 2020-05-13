@@ -8,9 +8,8 @@ module HsRedis
       @name = name
     end
 
-    def get(key, expires_in: HsRedis.configuration.expires_in, &block)
+    def get(key, timeout_callback, expires_in: HsRedis.configuration.expires_in, &block)
       begin
-        callbacks = RedisCallbacks[block]
         result = read_get(key)
         unless result
           value = yield value
@@ -19,7 +18,7 @@ module HsRedis
         end
         result
       rescue Redis::TimeoutError => e
-        callbacks.respond_with(:timeout, e)
+        run_callback(timeout_callback)
       end
     end
 
@@ -28,10 +27,9 @@ module HsRedis
     # @param key [String]
     # @param expires_in [Integer]
     # @return [Hash] Hash data retrrieved from redis
-    def multi_get(*keys, expires_in: HsRedis.configuration.expires_in, &block)
+    def multi_get(*keys, timeout_callback, expires_in: HsRedis.configuration.expires_in, &block)
       begin
         return {} if keys == []
-        callbacks = RedisCallbacks[block]
         results = read_mget(*keys)
         need_writes = {}
 
@@ -48,23 +46,19 @@ module HsRedis
         need_writes.each do |key, value|
           write(key, expires_in, value)
         end
-        callbacks.respond_with(:success)
         fetched
       rescue Redis::TimeoutError => e
-        callbacks.respond_with(:timeout, e)
+        run_callback(timeout_callback)
       end
     end
 
     # delete redis record
     # @param key [String]
-    def delete(key, &block)
+    def delete(key, timeout_callback, &block)
       begin
-        callbacks = RedisCallbacks[block]
-        result = delete_key(key)
-        callbacks.respond_with(:success)
-        result
+        delete_key(key)
       rescue Redis::TimeoutError => e
-        callbacks.respond_with(:timeout, e)
+        run_callback(timeout_callback)
       end
     end
 
@@ -95,6 +89,11 @@ module HsRedis
 
     def delete_key(key)
       client.with { |redis| redis.del(key) }
+    end
+
+    def run_callback(callback)
+      raise HsRedis::Errors::ProcCallback unless callback.is_a? Proc
+      callback.call
     end
 
   end
