@@ -36,6 +36,11 @@ RSpec.describe HsRedis::Configuration do
     expected_client = { client1: client }
     configuration.clients = expected_client
     expect(configuration.clients).to eq expected_client
-    
+  end
+
+  it 'can set registry' do
+    expected_registry = HsRedis::Clients::Registry
+    configuration.registry = expected_registry
+    expect(configuration.registry).to eq expected_registry
   end
 end
