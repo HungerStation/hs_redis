@@ -31,9 +31,7 @@ RSpec.describe HsRedis::Store do
       it 'should raise callback with exception' do
         allow(redis).to receive(:get).and_raise(Redis::TimeoutError)
         expect do
-          described_class.new(:mock_client).get('test_key', callback) do |on|
-            'sample_test'
-          end
+          described_class.new(:mock_client).get('test_key', callback) { 'sample' }
         end.to raise_error(HsRedis::Errors::Timeout)
       end
     end
@@ -60,9 +58,7 @@ RSpec.describe HsRedis::Store do
           key2: FFaker::Lorem.characters
         }
         expect do
-          described_class.new(:mock_client).multi_get(*data.keys, callback) do |key|
-            data[key]
-          end
+          described_class.new(:mock_client).multi_get(*data.keys, callback) { |key| data[key] }
         end.to raise_error(HsRedis::Errors::Timeout)
       end
     end

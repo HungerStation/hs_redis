@@ -64,7 +64,7 @@ module HsRedis
   end
 
   def self.registry
-    @configuration.registry
+    self.configuration.registry
   end
 
   def self.initialize_configuration!

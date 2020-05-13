@@ -6,7 +6,7 @@ module HsRedis
         # @param name [String], connection name
         # @param connection_pool [Object], object of ConnectionPool
         def register_client(name, connection_pool)
-          raise HsRedis::Errors::AlreadyRegistered if registered? name
+          validate_registration(name)
           registered_clients[name.to_sym] = connection_pool
         end
 
@@ -19,17 +19,9 @@ module HsRedis
         # @param db [Integer], redis DB, default 0
         def register(name, pool_size: HsRedis::Configuration.pool_size, timeout: HsRedis.Configuration.timeout, client_name: nil, redis_uri: nil, db: 0)
           raise HsRedis::Errors::MissingParameter 'Missing Redis URI' unless redis_uri
-          redis_pool = ConnectionPool.new(size: pool_size, timeout: timeout) do
-            begin
-              redis = Redis.new(url: "#{redis_uri}/#{db}")
-              client_name = client_name || name.upcase
-              redis.call([:client, :setname, client_name])
-              redis
-            rescue Redis::TimeoutError
-              raise HsRedis::Errors::Timeout, 'Connection Timeout'
-            end
-          end
-          raise HsRedis::Errors::AlreadyRegistered if registered? name
+          redis_client_instance = register_redis(name, redis_uri, db, client_name)
+          redis_pool = ConnectionPool.new(size: pool_size, timeout: timeout) { redis_client_instance }
+          validate_registration(name)
           registered_clients[name.to_sym] = redis_pool
         end
 
@@ -43,6 +35,23 @@ module HsRedis
 
         def registered?(name)
           registered_clients.keys.include? name.to_sym
+        end
+
+        private
+
+        def register_redis(name, redis_uri, db, client_name)
+          begin
+            redis = Redis.new(url: "#{redis_uri}/#{db}")
+            client_name = client_name || name.upcase
+            redis.call([:client, :setname, client_name])
+            redis
+          rescue Redis::TimeoutError
+            raise HsRedis::Errors::Timeout, 'Connection Timeout'
+          end
+        end
+
+        def validate_registration(name)
+          raise HsRedis::Errors::AlreadyRegistered, 'Client Already Registered, please choose differet name' if registered? name
         end
       end
     end

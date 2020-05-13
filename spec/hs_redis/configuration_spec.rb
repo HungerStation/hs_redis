@@ -30,9 +30,7 @@ RSpec.describe HsRedis::Configuration do
   end
 
   it 'can set the clients' do
-    client = ConnectionPool.new(size: 5, timeout: 5) do
-               Redis.new
-             end
+    client = ConnectionPool.new(size: 5, timeout: 5) { Redis.new }
     expected_client = { client1: client }
     configuration.clients = expected_client
     expect(configuration.clients).to eq expected_client
@@ -42,5 +40,9 @@ RSpec.describe HsRedis::Configuration do
     expected_registry = HsRedis::Clients::Registry
     configuration.registry = expected_registry
     expect(configuration.registry).to eq expected_registry
+  end
+
+  it 'can get default registry' do
+    expect(HsRedis.registry).to eq HsRedis::Clients::Registry
   end
 end

@@ -1,3 +1,9 @@
+if ENV['COVERAGE']
+  require 'simplecov'
+  SimpleCov.start
+  SimpleCov.minimum_coverage(100)
+end
+
 require 'bundler/setup'
 require 'hs_redis'
 require 'fakeredis/rspec'
