@@ -5,7 +5,9 @@ set -vx
 
 # copy pre-push template
 cp -f pre-push.template .git/hooks/pre-push
-chmod 777 .git/hooks/pre-push
+
+# set to executable
+chmod +x .git/hooks/pre-push
 
 bundle install
 

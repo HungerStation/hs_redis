@@ -76,7 +76,7 @@ HsRedis.client(:name).delete(key, callback)
 ```
 
 ### Notes
-currently, callback only for handling `Redis::TimeoutError`
+- currently, callback only for handling `Redis::TimeoutError`
 
 ## Development
 
@@ -85,10 +85,12 @@ this only for unix machine (mac OS or GNU/Linux)
 run `./bin/setup`
 
 ### Coverage
-for coverage useing simplecov, with minimum coverage 100 %, report will generated during running test
+- for coverage using simplecov, with minimum coverage 100 %, report will generated during running test
 
 ### running test
-`COVERAGE=true bundle exec rspec spec`
+```rspec spec```
+will produce test result with coverage statistic
+
 
 ## Contributing
 

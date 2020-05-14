@@ -1,0 +1,29 @@
+#!/bin/bash
+
+printf "[RSPEC] Running test suite... "
+
+# Go to start of line
+echo -ne "\r"
+
+# Execute tests
+FAILS=$(COVERAGE=true bundle exec rspec --format progress | grep -E '(\d*) failure(s?)' -o | awk '{print $1}')
+
+# Replace line (removes SimpleCov message, if any)
+echo -e "\r[RSPEC] Running test suite... "
+
+# Output execution result
+if [[ $FAILS -ne 0 ]]; then
+  # Pluralize failed tests message
+  if [[ $FAILS -gt 1 ]]; then
+    TEXT="tests"
+  else
+    TEXT="test"
+  fi
+
+  echo -e "\033[31;1m$FAILS $TEXT failed. This test including coverage, if below 100% will be marked as failed\033[0m"
+  echo "Push aborted."
+  exit 1
+else
+  echo -e "\033[32;1mAll tests passed\033[0m."
+  exit 0
+fi

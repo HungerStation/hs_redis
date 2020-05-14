@@ -17,7 +17,8 @@ RSpec.describe HsRedis::Clients::Registry do
   describe '#register_client' do
     context 'given non existing registered client' do
       it 'should success' do
-        expect { described_class.register_client(name, client) }.to_not raise_error(HsRedis::Errors::AlreadyRegistered)
+        described_class.register_client(name, client)
+        expect(described_class.registered_clients.size).to eq 1
       end
     end
 
