@@ -17,7 +17,7 @@ module HsRedis
           result = value
         end
         result
-      rescue Redis::TimeoutError, Redis::CannotConnectError => e
+      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
         run_callback(callback)
       end
     end
@@ -47,7 +47,7 @@ module HsRedis
           write(key, expires_in, value)
         end
         fetched
-      rescue Redis::TimeoutError, Redis::CannotConnectError => e
+      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
         run_callback(callback)
       end
     end
@@ -57,7 +57,7 @@ module HsRedis
     def delete(key, callback, &block)
       begin
         delete_key(key)
-      rescue Redis::TimeoutError, Redis::CannotConnectError => e
+      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
         run_callback(callback)
       end
     end
@@ -74,26 +74,37 @@ module HsRedis
     # @return [Hash] hash data retrieved from redis
     def read_mget(*keys)
       return {} if keys == []
-
-      values = client.with { |redis| redis.mget *keys }
+      values = with_timeout do
+                 client.with { |redis| redis.mget *keys }
+               end
       Hash[keys.zip(values)].reject{|k,v| v.nil?}
     end
 
     def write(key, expires_in, value)
-      client.with { |redis| redis.setex(key, expires_in, value) }
+      with_timeout do
+        client.with { |redis| redis.setex(key, expires_in, value) }
+      end
     end
 
     def read_get(key)
-      client.with { |redis| redis.get(key) }
+      with_timeout do
+        client.with { |redis| redis.get(key) }
+      end
     end
 
     def delete_key(key)
-      client.with { |redis| redis.del(key) }
+      with_timeout do
+        client.with { |redis| redis.del(key) }
+      end
     end
 
     def run_callback(callback)
       raise HsRedis::Errors::ProcCallback, 'Callback should be Proc' unless callback.is_a? Proc
       callback.call
+    end
+
+    def with_timeout(&block)
+      Timeout.timeout(client.options[:timeout]) { block.call }
     end
   end
 end
