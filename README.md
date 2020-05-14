@@ -23,7 +23,7 @@ Or install it yourself as:
 ### configuration
 put this configuration in initializer
 ```
-client = ConnectionPool.new(size: 15, timeout: 5) do
+client = ConnectionPool::Wrapper.new(size: 15, timeout: 5) do
   redis = Redis.new(url: "#{Rails.application.secrets.redis_listing_url}")
   if Rails.application.secrets.redis_set_client_name
     client_name = 'listing_client'
