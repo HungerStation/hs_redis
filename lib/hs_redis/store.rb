@@ -80,15 +80,15 @@ module HsRedis
     end
 
     def write(key, expires_in, value)
-      client.setex(key, expires_in, value)
+      client.with { |redis| redis.setex(key, expires_in, value) }
     end
 
     def read_get(key)
-      client.get(key)
+      client.with { |redis| redis.get(key) }
     end
 
     def delete_key(key)
-      client.del(key)
+      client.with { |redis| redis.del(key) }
     end
 
     def run_callback(callback)
