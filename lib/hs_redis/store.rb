@@ -8,7 +8,7 @@ module HsRedis
       @name = name
     end
 
-    def get(key, timeout_callback, expires_in: HsRedis.configuration.expires_in, &block)
+    def get(key, callback, expires_in: HsRedis.configuration.expires_in, &block)
       begin
         result = read_get(key)
         unless result
@@ -18,7 +18,7 @@ module HsRedis
         end
         result
       rescue Redis::TimeoutError, Redis::CannotConnectError => e
-        run_callback(timeout_callback)
+        run_callback(callback)
       end
     end
 
@@ -27,7 +27,7 @@ module HsRedis
     # @param key [String]
     # @param expires_in [Integer]
     # @return [Hash] Hash data retrrieved from redis
-    def multi_get(*keys, timeout_callback, expires_in: HsRedis.configuration.expires_in, &block)
+    def multi_get(*keys, callback, expires_in: HsRedis.configuration.expires_in, &block)
       begin
         return {} if keys == []
         results = read_mget(*keys)
@@ -48,17 +48,17 @@ module HsRedis
         end
         fetched
       rescue Redis::TimeoutError, Redis::CannotConnectError => e
-        run_callback(timeout_callback)
+        run_callback(callback)
       end
     end
 
     # delete redis record
     # @param key [String]
-    def delete(key, timeout_callback, &block)
+    def delete(key, callback, &block)
       begin
         delete_key(key)
       rescue Redis::TimeoutError, Redis::CannotConnectError => e
-        run_callback(timeout_callback)
+        run_callback(callback)
       end
     end
 
@@ -80,15 +80,15 @@ module HsRedis
     end
 
     def write(key, expires_in, value)
-      client.with { |redis| redis.setex(key, expires_in, value) }
+      client.setex(key, expires_in, value)
     end
 
     def read_get(key)
-      client.with { |redis| redis.get(key) }
+      client.get(key)
     end
 
     def delete_key(key)
-      client.with { |redis| redis.del(key) }
+      client.del(key)
     end
 
     def run_callback(callback)

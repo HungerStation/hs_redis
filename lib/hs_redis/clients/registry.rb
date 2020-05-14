@@ -20,7 +20,7 @@ module HsRedis
         def register(name, pool_size: HsRedis::Configuration.pool_size, timeout: HsRedis.Configuration.timeout, client_name: nil, redis_uri: nil, db: 0)
           raise HsRedis::Errors::MissingParameter 'Missing Redis URI' unless redis_uri
           redis_client_instance = register_redis(name, redis_uri, db, client_name)
-          redis_pool = ConnectionPool.new(size: pool_size, timeout: timeout) { redis_client_instance }
+          redis_pool = ConnectionPool::Wrapper.new(size: pool_size, timeout: timeout) { redis_client_instance }
           validate_registration(name)
           registered_clients[name.to_sym] = redis_pool
         end

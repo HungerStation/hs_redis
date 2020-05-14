@@ -2,7 +2,7 @@ require 'spec_helper'
 
 RSpec.describe HsRedis::Store do
   let!(:connection_pool) do
-    ConnectionPool.new(size: 5, timeout: 5) do
+    ConnectionPool::Wrapper.new(size: 5, timeout: 5) do
       redis
     end
   end
