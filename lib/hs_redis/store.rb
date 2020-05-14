@@ -18,6 +18,7 @@ module HsRedis
         end
         result
       rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
+        puts "rescue GET FROM :#{e.inspect}"
         run_callback(callback)
       end
     end
@@ -48,6 +49,7 @@ module HsRedis
         end
         fetched
       rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
+        puts "rescue MGET FROM :#{e.inspect}"
         run_callback(callback)
       end
     end
@@ -104,7 +106,9 @@ module HsRedis
     end
 
     def with_timeout(&block)
-      Timeout.timeout(client.options[:timeout]) { block.call }
+      Timeout.timeout(HsRedis.configuration.timeout) do
+        block.call
+      end
     end
   end
 end
