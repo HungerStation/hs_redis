@@ -17,7 +17,7 @@ module HsRedis
           result = value
         end
         result
-      rescue Redis::TimeoutError => e
+      rescue Redis::TimeoutError, Redis::CannotConnectError => e
         run_callback(timeout_callback)
       end
     end
@@ -47,7 +47,7 @@ module HsRedis
           write(key, expires_in, value)
         end
         fetched
-      rescue Redis::TimeoutError => e
+      rescue Redis::TimeoutError, Redis::CannotConnectError => e
         run_callback(timeout_callback)
       end
     end
@@ -57,7 +57,7 @@ module HsRedis
     def delete(key, timeout_callback, &block)
       begin
         delete_key(key)
-      rescue Redis::TimeoutError => e
+      rescue Redis::TimeoutError, Redis::CannotConnectError => e
         run_callback(timeout_callback)
       end
     end

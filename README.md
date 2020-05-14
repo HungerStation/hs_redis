@@ -56,7 +56,7 @@ HsRedis.registry.register(:listing_client, pool_size: 5, timeout: 5, redis_uri: 
 ### get operation
 ```
 callback = Proc.new { "callback_operation" }
-HsRedis.client(:name).get(key, expires_in: 5000, callback) do
+HsRedis.client(:name).get(key, callback, expires_in: 5000) do
     //some operation
 end
 ```
@@ -64,7 +64,7 @@ end
 ### multi get operation
 ```
 callback = Proc.new { "callback_operation" }
-HsRedis.client(:name).multi_get(*keys, expires_in: 5000, callback) do
+HsRedis.client(:name).multi_get(*keys, callback, expires_in: 5000) do
     //some operation
 end
 ```
@@ -76,7 +76,7 @@ HsRedis.client(:name).delete(key, callback)
 ```
 
 ### Notes
-- currently, callback only for handling `Redis::TimeoutError`
+- currently, callback only for handling `Redis::TimeoutError` and `Redis::CannotConnectError`
 
 ## Development
 
