@@ -50,6 +50,11 @@ RSpec.describe HsRedis::Clients::Registry do
         expect { described_class.register(name, pool_size: rand(1..5), timeout: rand(1..10), redis_uri: 'http://localhost', db: 0) }
           .to raise_error(HsRedis::Errors::AlreadyRegistered)
       end
+
+      it 'should raise HsRedis::Errors::MissingParameter' do
+        expect { described_class.register(name, pool_size: rand(1..5), timeout: rand(1..10), db: 0) }
+          .to raise_error(HsRedis::Errors::MissingParameter)
+      end
     end
 
     context 'given redis not available' do
