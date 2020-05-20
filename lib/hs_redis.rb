@@ -1,5 +1,7 @@
 require "hs_redis/version"
 
+require "hs_redis/log/custom_logger"
+
 require "hs_redis/errors/base"
 require "hs_redis/errors/already_registered"
 require "hs_redis/errors/missing_parameter"

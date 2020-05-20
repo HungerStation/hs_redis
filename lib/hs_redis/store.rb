@@ -1,6 +1,7 @@
 module HsRedis
   class Store
     include Callbacks
+    include ::HsRedis::Log::CustomLogger
 
     attr_writer :name
     attr_reader :name
@@ -18,7 +19,7 @@ module HsRedis
         end
         result
       rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
-        puts "rescue GET FROM :#{e.inspect}"
+        logit.error("Transaction: GET, details: #{e.message}")
         run_callback(callback)
       end
     end
@@ -49,7 +50,7 @@ module HsRedis
         end
         fetched
       rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
-        puts "rescue MGET FROM :#{e.inspect}"
+        logit.error("Transaction: MGET, details: #{e.message}")
         run_callback(callback)
       end
     end
@@ -60,6 +61,7 @@ module HsRedis
       begin
         delete_key(key)
       rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
+        logit.error("Transaction: DELETE, details: #{e.message}")
         run_callback(callback)
       end
     end
