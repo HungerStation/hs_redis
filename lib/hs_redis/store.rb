@@ -9,12 +9,12 @@ module HsRedis
       @name = name
     end
 
-    def get(key, callback, expires_in: HsRedis.configuration.expires_in, &block)
+    def get(key, callback, expires_in: HsRedis.configuration.expires_in, write: true, &block)
       begin
         result = read_get(key)
         unless result
           value = yield value
-          write(key, expires_in, value)
+          write(key, expires_in, value) if write
           result = value
         end
         result
