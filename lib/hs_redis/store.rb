@@ -1,21 +1,33 @@
+require 'hs_redis/cache_entry.rb'
 module HsRedis
   class Store
     include Callbacks
     include ::HsRedis::Log::CustomLogger
 
-    attr_writer :name
-    attr_reader :name
-    def initialize(name)
+    attr_accessor :name
+    def initialize(name, timeout = nil)
       @name = name
+      @timeout = timeout
     end
 
-    def get(key, callback, expires_in: HsRedis.configuration.expires_in, write: true, &block)
+    def timeout
+      @timeout || client.instance_variable_get(:@timeout) || HsRedis.configuration.timeout
+    end
+
+    def set_timeout(timeout)
+      @timeout = timeout
+    end
+
+    def get(key, callback, expires_in: HsRedis.configuration.expires_in, write: true)
       begin
         result = read_get(key)
-        if result.nil? || result.blank?
+        result.force_encoding('ASCII-8BIT') unless result.nil?
+        if block_given? && (result.nil? || result.blank?)
           value = yield value
-          write(key, expires_in, value) if write
+          write(key, expires_in, CacheEntry.serialize(value)) if write
           result = value
+        elsif !result.nil?
+          result = CacheEntry.parse(result)
         end
         result
       rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
@@ -29,24 +41,31 @@ module HsRedis
     # @param key [String]
     # @param expires_in [Integer]
     # @return [Hash] Hash data retrrieved from redis
-    def multi_get(*keys, callback, expires_in: HsRedis.configuration.expires_in, &block)
+    def multi_get(*keys, callback, expires_in: HsRedis.configuration.expires_in)
       begin
         return {} if keys == []
         results = read_mget(*keys)
         need_writes = {}
 
         fetched = keys.inject({}) do |fetch, key|
-          fetch[key] = results.fetch(key) do
-            value = yield key
-            need_writes[key] = value
-            value
-          end
+          fetch[key] = if block_given?
+                         results.fetch(key) do
+                           value = CacheEntry.serialize(yield key)
+                           need_writes[key] = value
+                           value
+                         end
+                       else
+                         results[key]
+                       end
+          fetch[key] = CacheEntry.parse(fetch[key])
           fetch
         end
 
         # writes non existing data in redis to redis
-        need_writes.each do |key, value|
-          write(key, expires_in, value)
+        if block_given?
+          need_writes.each do |key, value|
+            write(key, expires_in, value)
+          end
         end
         fetched
       rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
@@ -57,7 +76,7 @@ module HsRedis
 
     # delete redis record
     # @param key [String]
-    def delete(key, callback, &block)
+    def delete(key, callback)
       begin
         delete_key(key)
       rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
@@ -81,7 +100,7 @@ module HsRedis
       values = with_timeout do
                  client.with { |redis| redis.mget *keys }
                end
-      Hash[keys.zip(values)].reject{|k,v| v.nil?}
+      Hash[keys.zip(values)].reject{|_k,v| v.nil?}
     end
 
     def write(key, expires_in, value)
@@ -103,12 +122,13 @@ module HsRedis
     end
 
     def run_callback(callback)
+      return if callback.nil?
       raise HsRedis::Errors::ProcCallback, 'Callback should be Proc' unless callback.is_a? Proc
       callback.call
     end
 
     def with_timeout(&block)
-      Timeout.timeout(HsRedis.configuration.timeout) do
+      Timeout.timeout(timeout) do
         block.call
       end
     end
