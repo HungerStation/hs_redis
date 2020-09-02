@@ -48,6 +48,19 @@ RSpec.describe HsRedis::Store do
       end
     end
 
+    context 'having old format data in redis' do
+      it 'should return the old formatted data with no error' do
+        key = FFaker::Lorem::word
+        value  = JSON.generate({id: '123.456', data: FFaker::Lorem.characters})
+        redis.setex(key, HsRedis.configuration.expires_in, value)
+        result = described_class.new(:mock_client).get(key, callback)
+        expect(value).to eq redis.get key
+        expect(value).to eq HsRedis::CacheEntry.parse(redis.get key)
+        expect(result).to eq value
+      end
+    end
+
+
     context 'given no fallback with data already saved' do
       it 'should store same data' do
         key = FFaker::Lorem::word
