@@ -1,5 +1,5 @@
 require 'spec_helper'
-
+require 'hs_redis/cache_entry.rb'
 RSpec.describe HsRedis::Store do
   let!(:connection_pool) do
     ConnectionPool::Wrapper.new(size: 5, timeout: 5) do
@@ -40,12 +40,48 @@ RSpec.describe HsRedis::Store do
       it 'should store same data' do
         key = FFaker::Lorem::word
         value  = FFaker::Lorem.characters
-        result = described_class.new(:mock_client).get(key, callback) do |on|
+        result = described_class.new(:mock_client).get(key, callback) do
                    value
-                 end
-        expect(value).to eq redis.get key
+                end
+        expect(value).to eq HsRedis::CacheEntry.parse(redis.get key)
         expect(result).to eq value
       end
+    end
+
+    context 'having old format data in redis' do
+      it 'should return the old formatted data with no error' do
+        key = FFaker::Lorem::word
+        value  = JSON.generate({id: '123.456', data: FFaker::Lorem.characters})
+        redis.setex(key, HsRedis.configuration.expires_in, value)
+        result = described_class.new(:mock_client).get(key, callback)
+        expect(value).to eq redis.get key
+        expect(value).to eq HsRedis::CacheEntry.parse(redis.get key)
+        expect(result).to eq value
+      end
+    end
+
+
+    context 'given no fallback with data already saved' do
+      it 'should store same data' do
+        key = FFaker::Lorem::word
+        value  = FFaker::Lorem.characters
+        described_class.new(:mock_client).get(key, callback) do
+          value
+        end
+        result = described_class.new(:mock_client).get(key, nil)
+        expect(value).to eq HsRedis::CacheEntry.parse(redis.get key)
+        expect(result).to eq value
+      end
+    end
+  end
+
+  context 'changed timeout' do
+    it 'should reflect in instance timeout' do
+      mock_client = described_class.new(:mock_client)
+      expect(mock_client.timeout).to eq(connection_pool.instance_variable_get(:@timeout) || HsRedis.configuration.timeout)
+      expected_timeout = 0.05
+      mock_client.set_timeout(expected_timeout) #set timeout to 50 milliseconds
+      expect(mock_client.timeout).to eq expected_timeout
     end
   end
 
@@ -71,9 +107,23 @@ RSpec.describe HsRedis::Store do
         }
         results = described_class.new(:mock_client).multi_get(*data.keys, callback) do |key|
                    data[key]
-                 end
-        expect(data.values).to eq redis.mget *data.keys
+        end
+        redis_results = redis.mget *data.keys
+        expect(data.values).to eq redis_results.map{|rr| HsRedis::CacheEntry.parse(rr)}
         expect(results.values).to eq data.values
+      end
+    end
+
+    context 'given no fallback to redis' do
+      it 'should return no data' do
+        data = {
+            key1: FFaker::Lorem.characters,
+            key2: FFaker::Lorem.characters
+        }
+        results = described_class.new(:mock_client).multi_get(*data.keys, callback)
+        redis_results = redis.mget *data.keys
+        expect(redis_results.map{|rr| HsRedis::CacheEntry.parse(rr)}).to eq [nil, nil]
+        expect(results.values).to eq [nil, nil]
       end
     end
   end
@@ -86,7 +136,7 @@ RSpec.describe HsRedis::Store do
       result = client.get(key, callback) do
                   value
                 end
-      expect(value).to eq redis.get key
+      expect(value).to eq HsRedis::CacheEntry.parse(redis.get key)
       expect(client.delete(key, callback)).to eq 1
     end
 
