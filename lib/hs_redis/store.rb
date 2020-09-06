@@ -21,8 +21,7 @@ module HsRedis
     def get(key, callback, expires_in: HsRedis.configuration.expires_in, write: true)
       begin
         result = read_get(key)
-        result.force_encoding('ASCII-8BIT') unless result.nil?
-        if block_given? && (result.nil? || result.blank?)
+        if block_given? && (result.nil? || (result == ''))
           value = yield value
           write(key, expires_in, CacheEntry.serialize(value)) if write
           result = value
