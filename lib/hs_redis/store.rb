@@ -30,7 +30,7 @@ module HsRedis
         end
         result
       rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
-        logit.error("Transaction: GET, details: #{e.message}")
+        logit.error(transaction: 'GET', error_details: e.message, stack_trace: e, timeout_setting: timeout, key: key)
         run_callback(callback)
       end
     end
@@ -68,7 +68,7 @@ module HsRedis
         end
         fetched
       rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
-        logit.error("Transaction: MGET, details: #{e.message}")
+        logit.error(transaction: 'MGET', error_details: e.message, stack_trace: e, timeout_setting: timeout )
         run_callback(callback)
       end
     end
@@ -79,7 +79,7 @@ module HsRedis
       begin
         delete_key(key)
       rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
-        logit.error("Transaction: DELETE, details: #{e.message}")
+        logit.error(transaction: 'DELETE', error_details: e.message, stack_trace: e, timeout_setting: timeout, key: key )
         run_callback(callback)
       end
     end
