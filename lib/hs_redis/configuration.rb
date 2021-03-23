@@ -68,7 +68,11 @@ module HsRedis
   end
 
   def self.client(name)
-    HsRedis::Store.new(name)
+    unless HsRedis::Clients::Registry.store_registered?(name)
+      HsRedis::Clients::Registry.registered_stores[name.to_sym] = HsRedis::Store.new(name)
+    end
+    
+    HsRedis::Clients::Registry.registered_stores[name.to_sym]
   end
 
   def self.initialize_configuration!
