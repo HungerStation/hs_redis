@@ -30,7 +30,7 @@ module HsRedis
         end
         result
       rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
-        logit.error(transaction: 'GET', error_details: e.message, stack_trace: e, timeout_setting: timeout, key: key)
+        logit.error(title: 'hs-redis-error' ,transaction: 'GET', error_details: e.message, stack_trace: e, timeout_setting: timeout, key: key)
         run_callback(callback)
       end
     end
@@ -68,7 +68,7 @@ module HsRedis
         end
         fetched
       rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
-        logit.error(transaction: 'MGET', error_details: e.message, stack_trace: e, timeout_setting: timeout )
+        logit.error(title: 'hs-redis-error', transaction: 'MGET', error_details: e.message, stack_trace: e, timeout_setting: timeout )
         run_callback(callback)
       end
     end
@@ -79,7 +79,7 @@ module HsRedis
       begin
         delete_key(key)
       rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
-        logit.error(transaction: 'DELETE', error_details: e.message, stack_trace: e, timeout_setting: timeout, key: key )
+        logit.error(title: 'hs-redis-error', transaction: 'DELETE', error_details: e.message, stack_trace: e, timeout_setting: timeout, key: key )
         run_callback(callback)
       end
     end
@@ -126,10 +126,9 @@ module HsRedis
       callback.call
     end
 
+    ## set the time from redis client directly
     def with_timeout(&block)
-      Timeout.timeout(timeout) do
-        block.call
-      end
+      block.call
     end
   end
 end
