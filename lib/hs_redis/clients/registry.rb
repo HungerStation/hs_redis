@@ -37,6 +37,14 @@ module HsRedis
           registered_clients.keys.include? name.to_sym
         end
 
+        def registered_stores
+          @registered_stores ||= Hash.new
+        end
+
+        def store_registered?(name)
+          registered_stores.keys.include? name.to_sym
+        end
+
         private
 
         def register_redis(name, redis_uri, db, client_name)
