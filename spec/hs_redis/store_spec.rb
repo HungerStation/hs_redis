@@ -165,4 +165,48 @@ RSpec.describe HsRedis::Store do
       end.to raise_error(HsRedis::Errors::ProcCallback)
     end
   end
+
+  describe '#set' do
+    let(:callback) { Proc.new {} }
+    let(:key) { 'test_key' }
+    let(:value) { 'test_value' }
+    let(:expires_in) { 10 }
+    subject { described_class.new(:mock_client) }
+
+    context 'normal flow' do
+      it 'calls redis#setex with correct args' do
+        expect(redis).to receive(:setex).with(key, expires_in, value)
+        expect { subject.set(key, value, callback, expires_in: expires_in) }.not_to raise_error
+      end
+    end
+
+    context 'when error raised' do
+      it 'calls the callback' do
+        expect(redis).to receive(:setex).with(key, expires_in, value).and_raise(Redis::TimeoutError)
+        expect(callback).to receive(:call)
+        expect { subject.set(key, value, callback, expires_in: expires_in) }.not_to raise_error
+      end
+    end
+  end
+
+  describe '#mapped_mset' do
+    let(:callback) { Proc.new {} }
+    let(:hash) { { 'key1' => 'val1', 'key2' => 'val2' } }
+    subject { described_class.new(:mock_client) }
+
+    context 'normal flow' do
+      it 'calls redis#mset with correct args' do
+        expect(redis).to receive(:mapped_mset).with(hash)
+        expect { subject.mapped_mset(hash, callback) }.not_to raise_error
+      end
+    end
+
+    context 'when error raised' do
+      it 'calls the callback' do
+        expect(redis).to receive(:mapped_mset).with(hash).and_raise(Redis::TimeoutError)
+        expect(callback).to receive(:call)
+        expect { subject.mapped_mset(hash, callback) }.not_to raise_error
+      end
+    end
+  end
 end
