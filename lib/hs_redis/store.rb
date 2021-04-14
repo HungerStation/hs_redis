@@ -18,6 +18,11 @@ module HsRedis
       @timeout = timeout
     end
 
+    # Fetch / store data from / to redis [GET]
+    # should constructed as block
+    # @param key [String]
+    # @param expires_in [Integer]
+    # @return [Object] data retrieved from redis
     def get(key, callback, expires_in: HsRedis.configuration.expires_in, write: true)
       begin
         result = read_get(key)
@@ -37,9 +42,9 @@ module HsRedis
 
     # Fetch / store multiple data from / to redis [MGET]
     # should constructed as block
-    # @param key [String]
+    # @param keys [List<String>]
     # @param expires_in [Integer]
-    # @return [Hash] Hash data retrrieved from redis
+    # @return [Hash] Hash data retrieved from redis
     def multi_get(*keys, callback, expires_in: HsRedis.configuration.expires_in)
       begin
         return {} if keys == []
@@ -69,6 +74,32 @@ module HsRedis
         fetched
       rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
         logit.error(title: 'hs-redis-error', transaction: 'MGET', error_details: e.message, stack_trace: e, timeout_setting: timeout )
+        run_callback(callback)
+      end
+    end
+
+    # Set redis record using SET
+    # @param key [String]
+    # @param value [Object]
+    # @param expires_in [Integer]
+    def set(key, value, callback, expires_in: HsRedis.configuration.expires_in)
+      begin
+        write(key, expires_in, value)
+      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
+        logit.error(transaction: 'SET', error_details: e.message, stack_trace: e, timeout_setting: timeout, key: key )
+        run_callback(callback)
+      end
+    end
+
+    # Set multiple redis records using MSET
+    # @param hash [Hash] hash containing key-value pair
+    def mapped_mset(hash, callback)
+      begin
+        with_timeout do
+          client.with { |redis| redis.mapped_mset(hash) }
+        end
+      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
+        logit.error(transaction: 'MSET', error_details: e.message, stack_trace: e, timeout_setting: timeout, key: hash.keys.join(', ') )
         run_callback(callback)
       end
     end
