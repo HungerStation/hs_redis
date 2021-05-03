@@ -34,7 +34,7 @@ module HsRedis
           result = CacheEntry.parse(result)
         end
         result
-      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
+      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error, Redis::ConnectionError, Redis::CommandError => e
         logit.error(title: 'hs-redis-error' ,transaction: 'GET', error_details: e.message, stack_trace: e, timeout_setting: timeout, key: key)
         run_callback(callback)
       end
@@ -72,7 +72,7 @@ module HsRedis
           end
         end
         fetched
-      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
+      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error, Redis::ConnectionError, Redis::CommandError => e
         logit.error(title: 'hs-redis-error', transaction: 'MGET', error_details: e.message, stack_trace: e, timeout_setting: timeout )
         run_callback(callback)
       end
@@ -85,7 +85,7 @@ module HsRedis
     def set(key, value, callback, expires_in: HsRedis.configuration.expires_in)
       begin
         write(key, expires_in, value)
-      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
+      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error, Redis::ConnectionError, Redis::CommandError => e
         logit.error(transaction: 'SET', error_details: e.message, stack_trace: e, timeout_setting: timeout, key: key )
         run_callback(callback)
       end
@@ -98,7 +98,7 @@ module HsRedis
         with_timeout do
           client.with { |redis| redis.mapped_mset(hash) }
         end
-      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
+      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error, Redis::ConnectionError, Redis::CommandError => e
         logit.error(transaction: 'MSET', error_details: e.message, stack_trace: e, timeout_setting: timeout, key: hash.keys.join(', ') )
         run_callback(callback)
       end
@@ -109,7 +109,7 @@ module HsRedis
     def delete(key, callback)
       begin
         delete_key(key)
-      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error => e
+      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error, Redis::ConnectionError, Redis::CommandError => e
         logit.error(title: 'hs-redis-error', transaction: 'DELETE', error_details: e.message, stack_trace: e, timeout_setting: timeout, key: key )
         run_callback(callback)
       end
