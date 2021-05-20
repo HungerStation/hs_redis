@@ -104,6 +104,21 @@ module HsRedis
       end
     end
 
+    # Get multiple redis records using MGET with a hash
+    # @param keys [Hash] hash containing key-value pair
+    # @param callback [Callable] callback
+    def mapped_mget(keys, callback)
+      begin
+        with_timeout do
+          return {} if keys.empty?
+          client.with { |redis| redis.mapped_mget *keys }
+        end
+      rescue Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error, Redis::ConnectionError, Redis::CommandError => e
+        logit.error(transaction: 'MAPPED_MGET', error_details: e.message, stack_trace: e, timeout_setting: timeout, key: keys.keys.join(', ') )
+        run_callback(callback)
+      end
+    end
+
     # delete redis record
     # @param key [String]
     def delete(key, callback)
