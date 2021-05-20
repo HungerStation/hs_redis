@@ -209,4 +209,23 @@ RSpec.describe HsRedis::Store do
       end
     end
   end
+
+  describe '#mapped_mget' do
+    let(:callback) { Proc.new }
+    let(:hash) { { 'key1' => 'val1', 'key2' => 'val2' } }
+    subject { described_class.new(:mock_client)}
+
+    context 'normal flow' do
+      it 'calls redis#mapped_mget with correct args' do
+        expect(redis).to receive(:mapped_mget).with(hash)
+        expect{ subject.mapped_mget(hash, callback)}.not_to raise_error
+      end
+    end
+
+    context 'error raised' do
+      it 'call the callback' do
+        
+      end
+    end
+  end
 end
