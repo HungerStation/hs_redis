@@ -211,20 +211,23 @@ RSpec.describe HsRedis::Store do
   end
 
   describe '#mapped_mget' do
-    let(:callback) { Proc.new }
-    let(:hash) { { 'key1' => 'val1', 'key2' => 'val2' } }
+    let(:callback) { Proc.new {} }
+    let(:keys) { { 'key1' => 'val1', 'key2' => 'val2' } }
     subject { described_class.new(:mock_client)}
+    let(:error) { [Redis::TimeoutError, Redis::CannotConnectError, Timeout::Error, Redis::ConnectionError, Redis::CommandError].sample }
 
     context 'normal flow' do
       it 'calls redis#mapped_mget with correct args' do
-        expect(redis).to receive(:mapped_mget).with(hash)
-        expect{ subject.mapped_mget(hash, callback)}.not_to raise_error
+        expect(redis).to receive(:mapped_mget).with(*keys)
+        expect{ subject.mapped_mget(keys, callback)}.not_to raise_error
       end
     end
 
     context 'error raised' do
       it 'call the callback' do
-        
+        expect(redis).to receive(:mapped_mget).with(*keys).and_raise(error)
+        expect(callback).to receive(:call)
+        expect { subject.mapped_mget(keys, callback) }.not_to raise_error
       end
     end
   end
