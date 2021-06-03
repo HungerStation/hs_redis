@@ -1,6 +1,8 @@
 require 'spec_helper'
 require 'hs_redis/cache_entry.rb'
 RSpec.describe HsRedis::Store do
+  class CustomError < StandardError; end
+
   let!(:connection_pool) do
     ConnectionPool::Wrapper.new(size: 5, timeout: 5) do
       redis
@@ -19,6 +21,7 @@ RSpec.describe HsRedis::Store do
       config.clients = {
         mock_client: connection_pool
       }
+      config.custom_errors += [CustomError]
     end
   end
 
@@ -33,6 +36,24 @@ RSpec.describe HsRedis::Store do
         expect do
           described_class.new(:mock_client).get('test_key', callback) { 'sample' }
         end.to raise_error(HsRedis::Errors::Timeout)
+      end
+    end
+
+    context 'given default error raised' do
+      it 'should not raise the error' do
+        allow(redis).to receive(:get).and_raise(Redis::ConnectionError)
+        expect do
+          described_class.new(:mock_client).get('test_key', callback) { 'sample' }
+        end.not_to raise_error(Redis::ConnectionError)
+      end
+    end
+
+    context 'given custom error raised' do
+      it 'should not raise the error' do
+        allow(redis).to receive(:get).and_raise(CustomError)
+        expect do
+          described_class.new(:mock_client).get('test_key', callback) { 'sample' }
+        end.not_to raise_error(CustomError)
       end
     end
 

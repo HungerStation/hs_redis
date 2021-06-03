@@ -2,6 +2,10 @@ module HsRedis
   class Configuration
     def initialize
       @configuration = OpenStruct.new
+      @configuration.custom_errors = [
+        Redis::ConnectionError,
+        Redis::CommandError
+      ]
     end
 
     def timeout
@@ -53,6 +57,14 @@ module HsRedis
     def registry=(registry)
       @configuration.registry = registry
     end
+
+    def custom_errors
+      @configuration.custom_errors
+    end
+
+    def custom_errors=(errors)
+      @configuration.custom_errors = errors
+    end
   end
 
   def self.configuration
@@ -71,7 +83,7 @@ module HsRedis
     unless HsRedis::Clients::Registry.store_registered?(name)
       HsRedis::Clients::Registry.registered_stores[name.to_sym] = HsRedis::Store.new(name)
     end
-    
+
     HsRedis::Clients::Registry.registered_stores[name.to_sym]
   end
 
