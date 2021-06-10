@@ -3,6 +3,8 @@ require 'spec_helper'
 RSpec.describe HsRedis::Configuration do
   let(:configuration) { described_class.new }
 
+  class CustomError < StandardError; end
+
   it 'can set timeout' do
     expected_timeout = 5
     configuration.timeout = expected_timeout
@@ -48,5 +50,10 @@ RSpec.describe HsRedis::Configuration do
 
   it 'can get client' do
     expect(HsRedis.client(:name).is_a? HsRedis::Store).to eq true
+  end
+
+  it 'can set custom errors to rescue' do
+    configuration.custom_errors += [CustomError]
+    expect(configuration.custom_errors).to include(CustomError)
   end
 end
